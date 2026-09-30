@@ -4,6 +4,8 @@ import jwt from "jsonwebtoken";
 import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 import dotenv from "dotenv";
+import { listarProdutos } from "./src/controllers/produtosController.js";
+import swaggerSpec from "./scr/config/swagger.js";
 
 dotenv.config();
 
@@ -27,37 +29,15 @@ let proximoIdUsuario = 1;
 // PRODUTOS
 // ===============================
 
-const produtos = [
-  {
-    id: 1,
-    nome: "Notebook",
-    preco: 3500,
-    categoria: "Informática",
-    estoque: 10
-  },
-  {
-    id: 2,
-    nome: "Mouse Gamer",
-    preco: 150,
-    categoria: "Periféricos",
-    estoque: 25
-  }
-];
+
 
 let proximoIdProduto = 3;
 
-// ===============================
-// ROTA INICIAL
-// ===============================
+app.get("/produtos", listarProdutos);
 
-app.get("/", (req, res) => {
-  res.json({
-    mensagem: "API funcionando!",
-    disciplina: "Desenvolvimento de Sistemas",
-    bimestre: "AV1 + AV2",
-    documentacao: "/api-docs"
-  });
-});
+
+
+app.get("/produtos/:id", buscarProduto );
 
 // ===============================
 // CADASTRO DE USUÁRIO
@@ -235,37 +215,7 @@ app.get("/produtos/:id", autenticarToken, (req, res) => {
 // POST - CADASTRAR PRODUTO
 // ===============================
 
-app.post("/produtos", autenticarToken, (req, res) => {
-  const { nome, preco, categoria, estoque } = req.body;
-
-  if (
-    !nome ||
-    preco === undefined ||
-    !categoria ||
-    estoque === undefined
-  ) {
-    return res.status(400).json({
-      mensagem:
-        "Nome, preço, categoria e estoque são obrigatórios"
-    });
-  }
-
-  const novoProduto = {
-    id: proximoIdProduto,
-    nome,
-    preco: Number(preco),
-    categoria,
-    estoque: Number(estoque)
-  };
-
-  produtos.push(novoProduto);
-  proximoIdProduto++;
-
-  res.status(201).json({
-    mensagem: "Produto cadastrado com sucesso",
-    produto: novoProduto
-  });
-});
+app.post("/produtos", autenticarToken, cadastrarProduto);
 
 // ===============================
 // PUT - ATUALIZAR PRODUTO COMPLETO
@@ -313,138 +263,19 @@ app.put("/produtos/:id", autenticarToken, (req, res) => {
 // PATCH - ATUALIZAR PARCIALMENTE
 // ===============================
 
-app.patch("/produtos/:id", autenticarToken, (req, res) => {
-  const id = Number(req.params.id);
-
-  const produto = produtos.find(
-    (produto) => produto.id === id
-  );
-
-  if (!produto) {
-    return res.status(404).json({
-      mensagem: "Produto não encontrado"
-    });
-  }
-
-  const { nome, preco, categoria, estoque } = req.body;
-
-  if (nome !== undefined) {
-    produto.nome = nome;
-  }
-
-  if (preco !== undefined) {
-    produto.preco = Number(preco);
-  }
-
-  if (categoria !== undefined) {
-    produto.categoria = categoria;
-  }
-
-  if (estoque !== undefined) {
-    produto.estoque = Number(estoque);
-  }
-
-  res.json({
-    mensagem: "Produto atualizado parcialmente com sucesso",
-    produto
-  });
-});
+app.patch("/produtos/:id", autenticarToken, editarProduto);
 
 // ===============================
 // DELETE - EXCLUIR PRODUTO
 // ===============================
 
-app.delete("/produtos/:id", autenticarToken, (req, res) => {
-  const id = Number(req.params.id);
-
-  const indice = produtos.findIndex(
-    (produto) => produto.id === id
-  );
-
-  if (indice === -1) {
-    return res.status(404).json({
-      mensagem: "Produto não encontrado"
-    });
-  }
-
-  const produtoRemovido = produtos.splice(indice, 1)[0];
-
-  res.json({
-    mensagem: "Produto excluído com sucesso",
-    produto: produtoRemovido
-  });
-});
+app.delete("/produtos/:id", autenticarToken, deletarProduto);
 
 // ===============================
 // SWAGGER
 // ===============================
 
-const swaggerOptions = {
-  definition: {
-    openapi: "3.0.0",
-    info: {
-      title: "API de Cadastro de Produtos",
-      version: "1.0.0",
-      description:
-        "API desenvolvida para AV1 + AV2"
-    },
-    servers: [
-      {
-        url: "http://localhost:3000"
-      }
-    ],
-    components: {
-      securitySchemes: {
-        bearerAuth: {
-          type: "http",
-          scheme: "bearer",
-          bearerFormat: "JWT"
-        }
-      },
-      schemas: {
-        Usuario: {
-          type: "object",
-          properties: {
-            id: {
-              type: "integer"
-            },
-            nome: {
-              type: "string"
-            },
-            email: {
-              type: "string"
-            }
-          }
-        },
 
-        Produto: {
-          type: "object",
-          properties: {
-            id: {
-              type: "integer"
-            },
-            nome: {
-              type: "string"
-            },
-            preco: {
-              type: "number"
-            },
-            categoria: {
-              type: "string"
-            },
-            estoque: {
-              type: "integer"
-            }
-          }
-        }
-      }
-    }
-  },
-
-  apis: ["./server.js"]
-};
-
-const swaggerSpec = swaggerJsdoc(swaggerOptions);
 
 app.use(
   "/api-docs",
