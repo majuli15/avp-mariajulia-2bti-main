@@ -33,7 +33,7 @@ let proximoIdUsuario = 1;
 
 let proximoIdProduto = 3;
 
-app.get("/produtos", listarProdutos);
+
 
 
 
@@ -151,37 +151,7 @@ app.post("/login", async (req, res) => {
 // MIDDLEWARE DE AUTENTICAÇÃO
 // ===============================
 
-function autenticarToken(req, res, next) {
-  const authHeader = req.headers.authorization;
 
-  if (!authHeader) {
-    return res.status(401).json({
-      mensagem: "Token não informado"
-    });
-  }
-
-  const partes = authHeader.split(" ");
-
-  if (partes.length !== 2 || partes[0] !== "Bearer") {
-    return res.status(401).json({
-      mensagem: "Formato do token inválido"
-    });
-  }
-
-  const token = partes[1];
-
-  try {
-    const usuario = jwt.verify(token, JWT_SECRET);
-
-    req.usuario = usuario;
-
-    next();
-  } catch (error) {
-    return res.status(401).json({
-      mensagem: "Token inválido ou expirado"
-    });
-  }
-}
 
 // ===============================
 // GET - LISTAR PRODUTOS
@@ -215,7 +185,7 @@ app.get("/produtos/:id", autenticarToken, (req, res) => {
 // POST - CADASTRAR PRODUTO
 // ===============================
 
-app.post("/produtos", autenticarToken, cadastrarProduto);
+
 
 // ===============================
 // PUT - ATUALIZAR PRODUTO COMPLETO
@@ -263,13 +233,13 @@ app.put("/produtos/:id", autenticarToken, (req, res) => {
 // PATCH - ATUALIZAR PARCIALMENTE
 // ===============================
 
-app.patch("/produtos/:id", autenticarToken, editarProduto);
+
 
 // ===============================
 // DELETE - EXCLUIR PRODUTO
 // ===============================
 
-app.delete("/produtos/:id", autenticarToken, deletarProduto);
+
 
 // ===============================
 // SWAGGER
