@@ -1,31 +1,34 @@
+import jwt from "jsonwebtoken";
+import JWT_SECRET from "../config/jwt.js";
+
 export default function autenticarToken(req, res, next) {
-  const authHeader = req.headers.authorization;
+    const authHeader = req.headers.authorization;
 
-  if (!authHeader) {
-    return res.status(401).json({
-      mensagem: "Token não informado"
-    });
-  }
+    if (!authHeader) {
+        return res.status(401).json({
+            mensagem: "Token não informado"
+        });
+    }
 
-  const partes = authHeader.split(" ");
+    const partes = authHeader.split(" ");
 
-  if (partes.length !== 2 || partes[0] !== "Bearer") {
-    return res.status(401).json({
-      mensagem: "Formato do token inválido"
-    });
-  }
+    if (partes.length !== 2 || partes[0] !== "Bearer") {
+        return res.status(401).json({
+            mensagem: "Formato do token inválido"
+        });
+    }
 
-  const token = partes[1];
+    const token = partes[1];
 
-  try {
-    const usuario = jwt.verify(token, JWT_SECRET);
+    try {
+        const usuario = jwt.verify(token, JWT_SECRET);
 
-    req.usuario = usuario;
+        req.usuario = usuario;
 
-    next();
-  } catch (error) {
-    return res.status(401).json({
-      mensagem: "Token inválido ou expirado"
-    });
-  }
+        next();
+    } catch (error) {
+        return res.status(401).json({
+            mensagem: "Token inválido ou expirado"
+        });
+    }
 }

@@ -1,253 +1,30 @@
 import express from "express";
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 import swaggerUi from "swagger-ui-express";
-import dotenv from "dotenv";
-import { buscarProduto, listarProdutos } from "./src/controllers/produtosController.js";
+
+import produtosRoutes from "./src/routes/produtosRoutes.js";
+import usuariosRoutes from "./src/routes/usuariosRoutes.js";
+
 import swaggerSpec from "./src/config/swagger.js";
-import prisma from "./src/config/prisma.js"
-import autenticarToken from "./src/middlewares/autenticar.js";
-
-
-dotenv.config();
 
 const app = express();
 const PORT = 3000;
 
-const JWT_SECRET =
-  process.env.JWT_SECRET || "chave_secreta_do_projeto";
-
 app.use(express.json());
 
-// ===============================
-// USUÁRIOS
-// ===============================
-
-const usuarios = [];
-
-let proximoIdUsuario = 1;
-
-// ===============================
-// PRODUTOS
-// ===============================
-
-
-
-let proximoIdProduto = 3;
-
-try {
-  await prisma.$connect();
-} catch (error) {
-  console.error("Erro ao conectar ao banco de dados:", error.message);
-
-  await prisma.$disconnect();
-  process.exitCode = 1;
-}
-
-
-
-app.get("/produtos/:id", buscarProduto );
-
-// ===============================
-// CADASTRO DE USUÁRIO
-// ===============================
-
-app.post("/usuarios", async (req, res) => {
-  try {
-    const { nome, email, senha } = req.body;
-
-    if (!nome || !email || !senha) {
-      return res.status(400).json({
-        mensagem: "Nome, email e senha são obrigatórios"
-      });
-    }
-
-    const usuarioExistente = usuarios.find(
-      (usuario) => usuario.email === email
-    );
-
-    if (usuarioExistente) {
-      return res.status(400).json({
-        mensagem: "Email já cadastrado"
-      });
-    }
-
-    const senhaCriptografada = await bcrypt.hash(senha, 10);
-
-    const novoUsuario = {
-      id: proximoIdUsuario,
-      nome,
-      email,
-      senha: senhaCriptografada
-    };
-
-    usuarios.push(novoUsuario);
-    proximoIdUsuario++;
-
-    res.status(201).json({
-      mensagem: "Usuário cadastrado com sucesso",
-      usuario: {
-        id: novoUsuario.id,
-        nome: novoUsuario.nome,
-        email: novoUsuario.email
-      }
-    });
-  } catch (error) {
-    res.status(500).json({
-      mensagem: "Erro ao cadastrar usuário"
-    });
-  }
-});
-
-// ===============================
-// LOGIN
-// ===============================
-
-app.post("/login", async (req, res) => {
-  try {
-    const { email, senha } = req.body;
-
-    if (!email || !senha) {
-      return res.status(400).json({
-        mensagem: "Email e senha são obrigatórios"
-      });
-    }
-
-    const usuario = usuarios.find(
-      (usuario) => usuario.email === email
-    );
-
-    if (!usuario) {
-      return res.status(401).json({
-        mensagem: "Email ou senha inválidos"
-      });
-    }
-
-    const senhaCorreta = await bcrypt.compare(
-      senha,
-      usuario.senha
-    );
-
-    if (!senhaCorreta) {
-      return res.status(401).json({
-        mensagem: "Email ou senha inválidos"
-      });
-    }
-
-    const token = jwt.sign(
-      {
-        id: usuario.id,
-        email: usuario.email
-      },
-      JWT_SECRET,
-      {
-        expiresIn: "1h"
-      }
-    );
-
+// Rota inicial
+app.get("/", (req, res) => {
     res.json({
-      mensagem: "Login realizado com sucesso",
-      token
+        mensagem: "API funcionando!"
     });
-  } catch (error) {
-    res.status(500).json({
-      mensagem: "Erro ao realizar login"
-    });
-  }
 });
 
-// ===============================
-// MIDDLEWARE DE AUTENTICAÇÃO
-// ===============================
+// Rotas de usuários
+app.use("/usuarios", usuariosRoutes);
 
+// Rotas de produtos
+app.use("/produtos", produtosRoutes);
 
-
-// ===============================
-// GET - LISTAR PRODUTOS
-// ===============================
-
-app.get("/produtos", autenticarToken, async (req, res) => {
-  res.json(produtos);
-});
-
-// ===============================
-// GET - BUSCAR PRODUTO POR ID
-// ===============================
-
-app.get("/produtos/:id", autenticarToken, (req, res) => {
-  const id = Number(req.params.id);
-
-  const produto = produtos.find(
-    (produto) => produto.id === id
-  );
-
-  if (!produto) {
-    return res.status(404).json({
-      mensagem: "Produto não encontrado"
-    });
-  }
-
-  res.json(produto);
-});
-
-// ===============================
-// POST - CADASTRAR PRODUTO
-// ===============================
-
-
-
-// ===============================
-// PUT - ATUALIZAR PRODUTO COMPLETO
-// ===============================
-
-app.put("/produtos/:id", autenticarToken, (req, res) => {
-  const id = Number(req.params.id);
-
-  const produto = produtos.find(
-    (produto) => produto.id === id
-  );
-
-  if (!produto) {
-    return res.status(404).json({
-      mensagem: "Produto não encontrado"
-    });
-  }
-
-  const { nome, preco, categoria, estoque } = req.body;
-
-  if (
-    !nome ||
-    preco === undefined ||
-    !categoria ||
-    estoque === undefined
-  ) {
-    return res.status(400).json({
-      mensagem:
-        "Nome, preço, categoria e estoque são obrigatórios"
-    });
-  }
-
-  produto.nome = nome;
-  produto.preco = Number(preco);
-  produto.categoria = categoria;
-  produto.estoque = Number(estoque);
-
-  res.json({
-    mensagem: "Produto atualizado com sucesso",
-    produto
-  });
-});
-
-// ===============================
-// PATCH - ATUALIZAR PARCIALMENTE
-// ===============================
-
-
-
-// ===============================
-// DELETE - EXCLUIR PRODUTO
-// ===============================
-
+dotenv.config();
 
 
 // ===============================
@@ -307,7 +84,7 @@ app.use(
 
 /**
  * @swagger
- * /login:
+ * /usuarios/login:
  *   post:
  *     summary: Realiza login e gera token JWT
  *     requestBody:

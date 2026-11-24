@@ -1,6 +1,25 @@
+
 import express from "express";
 
-app.get("/produtos", listarProdutos);
-app.post("/produtos", autenticarToken, cadastrarProduto);
-app.patch("/produtos/:id", autenticarToken, editarProduto);
-app.delete("/produtos/:id", autenticarToken, deletarProduto);
+import {
+    listarProdutos,
+    buscarProduto,
+    cadastrarProduto,
+    editarProduto,
+    deletarProduto
+} from "../controllers/produtosController.js";
+
+import autenticarToken from "../middlewares/autenticar.js";
+
+const router = express.Router();
+
+// Consultar produtos
+router.get("/", listarProdutos);
+router.get("/:id", buscarProduto);
+
+// Operações protegidas pelo JWT
+router.post("/", autenticarToken, cadastrarProduto);
+router.patch("/:id", autenticarToken, editarProduto);
+router.delete("/:id", autenticarToken, deletarProduto);
+
+export default router;

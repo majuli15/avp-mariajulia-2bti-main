@@ -12,10 +12,23 @@ datasource db {
   provider = "mysql"
 }
 
-model Produto{
-  id Int @id @default(autoincrement())
-  nome String @db.VarChar(100)
-  turma String @db.VarChar(20)
+
+model Produto {
+  id        Int     @id @default(autoincrement())
+  nome      String  @db.VarChar(100)
+  preco     Decimal @db.Decimal(10, 2)
+  categoria String  @db.VarChar(60)
+  estoque   Int
 
   @@map("produtos")
+}
+
+
+model Usuario {
+  id        Int    @id @default(autoincrement())
+  nome      String @db.VarChar(100)
+  email     String @unique @db.VarChar(191)
+  senhaHash String @db.VarChar(255)
+
+  @@map("usuarios")
 }
