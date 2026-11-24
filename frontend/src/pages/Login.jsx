@@ -41,9 +41,12 @@ export default function Login({ onLogin }) {
                 );
             }
 
+            if (typeof dados.token !== "string" || !dados.token) {
+                throw new Error("A API não retornou um token de autenticação válido.");
+            }
+
             localStorage.setItem("token", dados.token);
-            onLogin(dados.token);
-            setMensagem("Login realizado com sucesso!");
+            onLogin(dados.token, dados.message || "Login realizado com sucesso!");
             setEmail("");
             setSenha("");
 

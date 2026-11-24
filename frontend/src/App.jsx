@@ -10,19 +10,22 @@ function App() {
   const [token, setToken] = useState(
     localStorage.getItem("token")
   );
+  const [mensagemLogin, setMensagemLogin] = useState("");
 
-  function entrar(tokenRecebido) {
+  function entrar(tokenRecebido, mensagemRecebida) {
     setToken(tokenRecebido);
+    setMensagemLogin(mensagemRecebida);
   }
 
   function sair() {
     localStorage.removeItem("token");
     setToken(null);
+    setMensagemLogin("");
     setTela("login");
   }
 
   if (token) {
-    return <Produtos onLogout={sair} />;
+    return <Produtos onLogout={sair} mensagemInicial={mensagemLogin} />;
   }
 
   return (

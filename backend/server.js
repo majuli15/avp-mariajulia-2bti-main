@@ -1,5 +1,6 @@
 import express from "express";
 import swaggerUi from "swagger-ui-express";
+import "dotenv/config";
 
 import produtosRoutes from "./src/routes/produtosRoutes.js";
 import usuariosRoutes from "./src/routes/usuariosRoutes.js";
@@ -23,8 +24,6 @@ app.use("/usuarios", usuariosRoutes);
 
 // Rotas de produtos
 app.use("/produtos", produtosRoutes);
-
-dotenv.config();
 
 
 // ===============================
@@ -113,8 +112,6 @@ app.use(
  * /produtos:
  *   get:
  *     summary: Lista todos os produtos
- *     security:
- *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Lista de produtos
@@ -147,8 +144,6 @@ app.use(
  * /produtos/{id}:
  *   get:
  *     summary: Busca um produto pelo ID
- *     security:
- *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -158,32 +153,6 @@ app.use(
  *     responses:
  *       200:
  *         description: Produto encontrado
- *       404:
- *         description: Produto não encontrado
- */
-
-/**
- * @swagger
- * /produtos/{id}:
- *   put:
- *     summary: Atualiza um produto completamente
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/Produto'
- *     responses:
- *       200:
- *         description: Produto atualizado com sucesso
  *       404:
  *         description: Produto não encontrado
  */

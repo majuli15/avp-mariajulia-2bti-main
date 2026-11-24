@@ -6,19 +6,25 @@ import * as usuariosModel from '../models/usuariosModel.js';
 
 export async function cadastrarUsuario(req, res) {
     try {
-        const { nome, email, senha } = req.body;
+        const { nome, email, senha } = req.body ?? {};
+        const nomeNormalizado = typeof nome === "string" ? nome.trim() : "";
+        const emailNormalizado = typeof email === "string" ? email.trim().toLowerCase() : "";
 
-        if (!nome || !email || !senha) {
+        if (
+            !nomeNormalizado || nomeNormalizado.length > 100 ||
+            !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNormalizado) || emailNormalizado.length > 191 ||
+            typeof senha !== "string" || senha.length < 8 || Buffer.byteLength(senha, "utf8") > 72
+        ) {
             return res.status(400).json({
-                message: "Preencha todos os campos!"
+                message: "Informe nome e e-mail válidos e uma senha entre 8 e 72 bytes."
             });
         }
 
         const senhaHash = await bcrypt.hash(senha, 10);
 
         const novoUsuario = await usuariosModel.cadastrarUsuario(
-            nome,
-            email,
+            nomeNormalizado,
+            emailNormalizado,
             senhaHash
         );
 
@@ -44,15 +50,16 @@ export async function cadastrarUsuario(req, res) {
 
 export async function login(req, res) {
     try {
-        const { email, senha } = req.body;
+        const { email, senha } = req.body ?? {};
+        const emailNormalizado = typeof email === "string" ? email.trim().toLowerCase() : "";
 
-        if (!email || !senha) {
+        if (!emailNormalizado || typeof senha !== "string" || !senha) {
             return res.status(400).json({
                 message: "Informe o e-mail e a senha!"
             });
         }
 
-        const usuario = await usuariosModel.buscarPorEmail(email);
+        const usuario = await usuariosModel.buscarPorEmail(emailNormalizado);
 
         if (!usuario) {
             return res.status(401).json({

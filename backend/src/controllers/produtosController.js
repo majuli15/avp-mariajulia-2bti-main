@@ -45,17 +45,22 @@ export async function buscarProduto(req, res) {
 // CADASTRAR PRODUTO
 export async function cadastrarProduto(req, res) {
     try {
-        const { nome, preco, categoria, estoque } = req.body;
+        const { nome, preco, categoria, estoque } = req.body ?? {};
+        const nomeNormalizado = typeof nome === "string" ? nome.trim() : "";
+        const categoriaNormalizada = typeof categoria === "string" ? categoria.trim() : "";
+        const precoNumero = typeof preco === "number" || (typeof preco === "string" && preco.trim() !== "")
+            ? Number(preco)
+            : NaN;
+        const estoqueNumero = typeof estoque === "number" || (typeof estoque === "string" && estoque.trim() !== "")
+            ? Number(estoque)
+            : NaN;
 
         if (
-            !nome ||
-            !categoria ||
-            preco === undefined ||
-            estoque === undefined ||
-            !Number.isFinite(Number(preco)) ||
-            Number(preco) < 0 ||
-            !Number.isInteger(Number(estoque)) ||
-            Number(estoque) < 0
+            !nomeNormalizado || nomeNormalizado.length > 100 ||
+            !categoriaNormalizada || categoriaNormalizada.length > 60 ||
+            !Number.isFinite(precoNumero) || precoNumero < 0 || precoNumero > 99999999.99 ||
+            Number(precoNumero.toFixed(2)) !== precoNumero ||
+            !Number.isInteger(estoqueNumero) || estoqueNumero < 0
         ) {
             return res.status(400).json({
                 mensagem: "Informe nome, preço, categoria e estoque válidos"
@@ -63,10 +68,10 @@ export async function cadastrarProduto(req, res) {
         }
 
         const novoProduto = await produtosModel.criarProduto({
-            nome,
-            preco: Number(preco),
-            categoria,
-            estoque: Number(estoque)
+            nome: nomeNormalizado,
+            preco: precoNumero,
+            categoria: categoriaNormalizada,
+            estoque: estoqueNumero
         });
 
         res.status(201).json({
@@ -93,30 +98,50 @@ export async function editarProduto(req, res) {
         }
 
         const dados = {};
-        const { nome, preco, categoria, estoque } = req.body;
+        const { nome, preco, categoria, estoque } = req.body ?? {};
 
-        if (nome !== undefined) dados.nome = nome;
-        if (categoria !== undefined) dados.categoria = categoria;
+        if (nome !== undefined) {
+            if (typeof nome !== "string" || !nome.trim() || nome.trim().length > 100) {
+                return res.status(400).json({ mensagem: "Nome inválido" });
+            }
+            dados.nome = nome.trim();
+        }
+
+        if (categoria !== undefined) {
+            if (typeof categoria !== "string" || !categoria.trim() || categoria.trim().length > 60) {
+                return res.status(400).json({ mensagem: "Categoria inválida" });
+            }
+            dados.categoria = categoria.trim();
+        }
 
         if (preco !== undefined) {
-            if (!Number.isFinite(Number(preco))) {
+            const precoNumero = typeof preco === "number" || (typeof preco === "string" && preco.trim() !== "")
+                ? Number(preco)
+                : NaN;
+            if (
+                !Number.isFinite(precoNumero) || precoNumero < 0 ||
+                precoNumero > 99999999.99 || Number(precoNumero.toFixed(2)) !== precoNumero
+            ) {
                 return res.status(400).json({
                     mensagem: "Preço inválido"
                 });
             }
-            dados.preco = Number(preco);
+            dados.preco = precoNumero;
         }
 
         if (estoque !== undefined) {
+            const estoqueNumero = typeof estoque === "number" || (typeof estoque === "string" && estoque.trim() !== "")
+                ? Number(estoque)
+                : NaN;
             if (
-                !Number.isInteger(Number(estoque)) ||
-                Number(estoque) < 0
+                !Number.isInteger(estoqueNumero) ||
+                estoqueNumero < 0
             ) {
                 return res.status(400).json({
                     mensagem: "Estoque inválido"
                 });
             }
-            dados.estoque = Number(estoque);
+            dados.estoque = estoqueNumero;
         }
 
         if (Object.keys(dados).length === 0) {
